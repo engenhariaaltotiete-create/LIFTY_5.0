@@ -1,0 +1,9 @@
+import { useState } from 'react'
+import { db } from '../db/database'
+import type { ExerciseDefinition, ExerciseKind } from '../types'
+
+export default function CustomExerciseForm({onCreated}:{onCreated?:(e:ExerciseDefinition)=>void}){
+ const [name,setName]=useState('');const [kind,setKind]=useState<ExerciseKind>('resistance');const [muscle,setMuscle]=useState('');const [equipment,setEquipment]=useState('')
+ const save=async()=>{if(!name.trim())return;const normalized=name.trim().toLowerCase();const similar=await db.exercises.filter(e=>e.name.toLowerCase().includes(normalized)||normalized.includes(e.name.toLowerCase())).first();if(similar&&!confirm(`Já existe um exercício parecido: ${similar.name}. Deseja cadastrar mesmo assim?`))return;const item:ExerciseDefinition={name:name.trim(),kind,primaryMuscle:muscle||undefined,equipment:equipment||undefined,loadUnit:kind==='resistance'?'kg':'none',system:false};const id=await db.exercises.add(item);const created={...item,id};onCreated?.(created);setName('');setMuscle('');setEquipment('')}
+ return <div className="custom-exercise form-stack"><h3>Novo exercício</h3><label>Nome<input value={name} onChange={e=>setName(e.target.value)}/></label><label>Tipo<select value={kind} onChange={e=>setKind(e.target.value as ExerciseKind)}><option value="resistance">Resistido</option><option value="bodyweight">Peso corporal</option><option value="timed">Por tempo</option><option value="cardio_distance">Cardio: tempo + distância</option><option value="cardio_time">Cardio: tempo</option></select></label><div className="field-grid two"><label>Grupo principal<input value={muscle} onChange={e=>setMuscle(e.target.value)}/></label><label>Equipamento<input value={equipment} onChange={e=>setEquipment(e.target.value)}/></label></div><button className="primary full" onClick={save}>Salvar exercício</button></div>
+}
